@@ -13,18 +13,21 @@
 #include <unistd.h>
 #include <cmath>
 #include <fstream>
-#include <highgui.h>
+#include <opencv2/highgui.hpp>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include "utils.h"
+// #include <H5File.h>
 #include "signal_processing.h"
+#include <filesystem>
+namespace fs = std::__fs::filesystem;
 
 #define SAVE_output         1
 #define visu                1
-#define visu_SNR	    	1
+#define visu_SNR	    	0
 #define signal_size         300
-#define signal_processing   1
+#define signal_processing   0
 
 using namespace std;
 //=================================================================================
@@ -130,8 +133,8 @@ void write_traces(float* C1, float* C2, float* C3, const std::string& output_lab
 
     for (int y=0 ; y<SP->getActualSPNumber() ; y++)
     {
-        file << (double) C1[y] << " ";
-        file << (double) C2[y] << " ";
+        file << (double) C1[y] << ",";
+        file << (double) C2[y] << ",";
         file << (double) C3[y] << std::endl;
 
     }
@@ -314,7 +317,7 @@ void execute_IBIS( int K, int compa, IBIS* Super_Pixel, Signal_processing* Signa
 
 #if SAVE_output
     char output_labels[255] = {0};
-    sprintf(output_labels, "results/%s/traces_%04i.seg", output_basename.c_str(), frame_index);
+    sprintf(output_labels, "results/%s/traces_%04i.csv", output_basename.c_str(), frame_index);
     write_traces( R, G, B, output_labels, Super_Pixel );
 
     sprintf(output_labels, "results/%s/parent_%04i.seg", output_basename.c_str(), frame_index);
@@ -354,14 +357,12 @@ int filter( const struct dirent *name ) {
 
 }
 
-int main( int argc, char* argv[] )
+// int get_sp_labels( int argc, char* argv[] )
+int get_sp_labels( int K, int compa, const char* video_path, const char* save_path)
 {
     printf(" - Temporal IBIS - \n\n");
 
-    int K;
-    int compa;
-
-    if( argc != 4 ) {
+    if( K < 0 || compa < 0 ) {
         printf("--> usage ./IBIS_temporal SP_number Compacity File_path\n");
         printf(" |-> SP_number: user fixed number of superpixels, > 0\n");
         printf(" |-> Compacity: factor of caompacity, set to 20 for benchmark, > 0\n");
@@ -370,30 +371,12 @@ int main( int argc, char* argv[] )
         printf("--> output files are saved in a \"./results\" directory\n");
 
         exit(EXIT_SUCCESS);
-
-    }
-    else {
-        K = atoi( argv[ 1 ] );
-        compa = atoi( argv[ 2 ] );
-
-        if( K < 0 || compa < 0 ) {
-            printf("--> usage ./IBIS_temporal SP_number Compacity File_path\n");
-            printf(" |-> SP_number: user fixed number of superpixels, > 0\n");
-            printf(" |-> Compacity: factor of caompacity, set to 20 for benchmark, > 0\n");
-            printf(" |-> File_path: path to the file or device to use\n");
-            printf("\n");
-            printf("--> output files are saved in a \"./results\" directory\n");
-
-            exit(EXIT_SUCCESS);
-
-        }
-
     }
 
     // determine mode : file or path
     struct stat sb;
 
-    if (stat(argv[3], &sb) == -1) {
+    if (stat(video_path, &sb) == -1) {
         perror("stat");
         exit(EXIT_SUCCESS);
     }
@@ -431,25 +414,24 @@ int main( int argc, char* argv[] )
         Signal_processing Signal( K, signal_size );
 
         // get picture
-        cv::VideoCapture video( argv[ 3 ] );
+        cv::VideoCapture video( video_path );
         if(!video.isOpened()) { // check if we succeeded
             printf("Can't open this device or video file.\n");
             exit(EXIT_SUCCESS);
 
         }
+        cout << "reqches";
 
         cv::Mat img;
         int ii=0;
-        std::string output_basename = std::string(argv[3]);
+        std::string output_basename = std::string(save_path)+std::string(&video_path[24]);
 
-#if SAVE_output
-        if( type == 1 ) {
-            char command[255] = {0};
-            sprintf( command, "mkdir -p results/%s\n", output_basename.c_str() );
-            system( command );
+        // std::string output_basename = std::string(save_path) + std::string(video_path.substr(24, video_path.find("."));
+        // printf(video_path.substr(24, video_path.find("."));
 
-        }
-#endif
+        char command[255] = {0};
+        sprintf( command, "mkdir -p results/%s\n", output_basename.c_str() );
+        system( command );
 
         while( video.read( img ) ) {
             execute_IBIS( K, compa, &Super_Pixel, &Signal, &img, output_basename, ii );
@@ -458,67 +440,64 @@ int main( int argc, char* argv[] )
         }
 
     }
-    else if( type == 0 ) {
-        // get file list
-        struct dirent **namelist;
-        int n = scandir(argv[3], &namelist, &filter, alphasort);
-        if (n == -1) {
-           perror("scandir");
-           exit(EXIT_FAILURE);
+    // exit(EXIT_SUCCESS);
+}
 
-        }
+int dirExists(const char* const path)
+{
+    struct stat info;
 
-        printf(" %i file(s) identified\n", n);
-        if( n == 0 )
-            exit(EXIT_SUCCESS);
-
-        // process file list
-        int width = 0;
-        int height = 0;
-        IBIS* Super_Pixel;
-        Signal_processing Signal( K, signal_size );
-        char* image_name = (char*)malloc(255);
-        while (n--) {
-            printf("processing %s\n", namelist[n]->d_name);
-
-            // get picture
-
-            sprintf(image_name, "%s/%s", argv[3], namelist[n]->d_name );
-            cv::Mat img = cv::imread( image_name );
-
-            // execute IBIS
-            if( width == 0 ) {
-                width = img.cols;
-                height = img.rows;
-
-                // IBIS
-                Super_Pixel = new IBIS( K, compa );
-
-            }
-            else {
-                if( width != img.cols ) {
-                    delete Super_Pixel;
-                    Super_Pixel = new IBIS( K, compa );
-
-                    width = img.cols;
-                    height = img.rows;
-
-                }
-
-            }
-
-            execute_IBIS( K, compa, Super_Pixel, &Signal, &img, image_name, 0 );
-
-            free(namelist[n]);
-
-            printf("\n");
-        }
-
-        free( image_name );
-        delete Super_Pixel;
-        free( namelist );
-
+    int statRC = stat( path, &info );
+    if( statRC != 0 )
+    {
+        if (errno == ENOENT)  { return 0; } // something along the path does not exist
+        if (errno == ENOTDIR) { return 0; } // something in path prefix is not a dir
+        return -1;
     }
 
-    exit(EXIT_SUCCESS);
+    return ( info.st_mode & S_IFDIR ) ? 1 : 0;
+}
+
+int main(int argc, char* argv[])
+{   
+    int K = 150;
+    int compa = 20;
+    std::string path = "/Volumes/T7/vipl_videos";
+    const char * save_path = "../results/ecg/";
+    int f_count = 0;
+    for (const auto & entry : fs::directory_iterator(path))
+    {   
+        // std::string path_string{path.u8string()}
+
+        // cout << typeid(entry.path().string()).name() << endl;
+        const char * video_path = entry.path().c_str();
+        std::string check_filename = std::string(save_path)+std::string(&video_path[24]);
+        struct stat buffer;
+        // if (std::string(&video_path).c_string()[24] == ".")
+        //     continue;
+        // if (stat(check_filename.c_str(), &buffer) == -1) {
+        //     cout << check_filename.c_str() << " already present" << endl;
+        //     f_count++;
+        //     cout << f_count;
+        //     continue;
+        //     // exit(EXIT_SUCCESS);
+        // }
+        if (f_count < 352) {
+            // cout << check_filename.c_str() << " already present" << endl;
+            f_count++;
+            // cout << f_count;
+            continue;
+        }
+        else {
+            get_sp_labels(K, compa, video_path, save_path);
+            f_count++;
+            cout << "files completed: " << f_count << endl;
+            if (f_count == 500){
+                break;
+            }
+        }
+    }
+        // std::cout << entry.path() << std::endl;
+
+    return 0;
 }

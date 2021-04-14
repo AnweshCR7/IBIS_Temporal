@@ -6,6 +6,7 @@ Signal_processing::Signal_processing( int MaxSP, int size_signal)
 {
     size_signals = size_signal;
     max_SP = MaxSP;
+    // nb_sp = 0;
     index_circular = 0;
     HR = 0;
     count_SNR = 0;
@@ -124,8 +125,13 @@ void Signal_processing::process() {
 
         if( count_SNR < size_signals )
             count_SNR++;
-
-        float weight[nb_sp] = {0.f};
+        
+        float weight[nb_sp];
+        for (int i=0; i<nb_sp; i++)
+        {
+            weight[i]=0.f;
+        }
+        // memset(weight, 0, nb_sp*sizeof(float) );
         float sum_weight=0.f;
         for( int i=0; i<nb_sp; i++ ) {
             if (SNR[i] > 0)
@@ -154,8 +160,8 @@ void Signal_processing::process() {
 
 	// Signal final
 #if VISU_SIGNAL_FINAL
-	    CvPlot::clear("Signal_final");
-	    CvPlot::plot("Signal_final", fft_data, size_signals);
+	    // CvPlot::clear("Signal_final");
+	    // CvPlot::plot("Signal_final", fft_data, size_signals);
 #endif
             fft(fft_data, size_signals, GSL_FFT_FORWARD);
             for( int j=0; j<size_signals; j++ ) {
@@ -461,16 +467,24 @@ void Signal_processing::filter(double* signal, int length, float s, float* outpu
 float Signal_processing::compute_SNR(double* input, int n_input, int dirac_width, int nb_harmonic, int visu) {
     int i, j;
     int fft_plot[n_input];
-    double noise_signal[n_input] = {0};
-    double pure_signal[n_input] = {0};
-
+    double noise_signal[n_input];
+    double pure_signal[n_input];
+    for (int i=0; i<n_input; i++)
+    {
+        noise_signal[i]=0;
+        pure_signal[i]=0;
+    }
     double int_signal = 0;
     double int_noise = 0;
 
     float SNR;
 
     //define a model
-    double fft_model[n_input] = {0};
+    double fft_model[n_input];
+    for (int i=0; i<n_input; i++)
+    {
+        fft_model[i]=0;
+    }
     int demi_width_dirac = dirac_width/2;
 
     input[0] = 0;
@@ -504,17 +518,17 @@ float Signal_processing::compute_SNR(double* input, int n_input, int dirac_width
         SNR = 0.f;
 
     if(visu > 0) {
-        CvPlot::clear("Visu fft");
+        // CvPlot::clear("Visu fft");
 
         for(i=0; i<n_input; i++)
             fft_plot[i] = int(pure_signal[i] * 1000);
 
-        CvPlot::plot("Visu fft", fft_plot, n_input);
+        // CvPlot::plot("Visu fft", fft_plot, n_input);
 
         for(i=0; i<n_input; i++)
             fft_plot[i] = int(noise_signal[i] * 1000);
 
-        CvPlot::plot("Visu fft", fft_plot, n_input);
+        // CvPlot::plot("Visu fft", fft_plot, n_input);
     }
 
     return SNR;

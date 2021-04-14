@@ -21,7 +21,7 @@ set(sourceList
     utils.cpp
     ibis.cpp
     signal_processing.cpp
-    cv_plot.cpp
+    # cv_plot.cpp
     main.cpp
 
 )
@@ -29,7 +29,7 @@ set(sourceList
 set(headerList
     ibis.h
     utils.h
-    cvplot.h
+    # cvplot.h
     signal_processing.h
 
 )

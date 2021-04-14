@@ -18,8 +18,8 @@
 #include <gsl/gsl_fft_real.h>
 #include <gsl/gsl_fft_halfcomplex.h>
 
-#include <cvplot.h>
-#include <utils.h>
+#include "cvplot.h"
+#include "utils.h"
 
 #define DSP_FILTER_LOWPASS      0
 #define DSP_FILTER_HIGHPASS     1

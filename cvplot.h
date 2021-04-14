@@ -25,8 +25,17 @@
 //
 
 #include <vector>
-#include "cv.h"
-#include "highgui.h"
+#include "opencv2/opencv.hpp"
+#include "opencv2/core/types_c.h"
+// #include "opencv2/cvconfig.h"
+#include "opencv2/highgui.hpp"
+// #include "opencv2/core/core_c.h"
+// #include "opencv2/videoio/legacy/constants_c.h"
+// #include "opencv2/imgproc.hpp"
+#include "opencv2/calib3d.hpp"
+// #include "opencv2/"
+// #include "opencv2/core/core_c.h"
+#include "opencv2/imgproc/imgproc_c.h"
 
 using namespace std;
 
@@ -45,7 +54,7 @@ namespace CvPlot
 
                 // allow automatic curve color
                 bool auto_color;
-                CvScalar color;
+                cv::Scalar color;
 
                 Series(void);
                 Series(const Series& s);
@@ -56,7 +65,7 @@ namespace CvPlot
 
                 void SetData(int n, float *p);
 
-                void SetColor(CvScalar color, bool auto_color = true);
+                void SetColor(cv::Scalar color, bool auto_color = true);
                 void SetColor(int R, int G, int B, bool auto_color = true);
         };
 
@@ -71,9 +80,9 @@ namespace CvPlot
                 // margin size
                 int    border_size;
 
-                CvScalar backgroud_color;
-                CvScalar axis_color;
-                CvScalar text_color;
+                cv::Scalar backgroud_color;
+                cv::Scalar axis_color;
+                cv::Scalar text_color;
 
                 // several curves
                 vector<Series> plots;
@@ -113,7 +122,7 @@ namespace CvPlot
 
                 // call before plot
                 void Initialize();
-                CvScalar GetAutoColor();
+                cv::Scalar GetAutoColor();
 
         };
 

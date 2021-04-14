@@ -494,7 +494,7 @@ void IBIS::reset() {
 
 void IBIS::getLAB( cv::Mat* img ) {
     cv::Mat lab_image;
-    cv::cvtColor(*img, lab_image, CV_BGR2Lab, 0);
+    cv::cvtColor(*img, lab_image, cv::COLOR_BGR2Lab, 0);
 
     int ii = 0;
 
