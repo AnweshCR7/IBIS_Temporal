@@ -463,41 +463,34 @@ int main(int argc, char* argv[])
     int K = 150;
     int compa = 20;
     std::string path = "/Volumes/T7/vipl_videos";
-    const char * save_path = "../results/ecg/";
+    const char * save_path = "../results/VIPL_HR/";
     int f_count = 0;
     for (const auto & entry : fs::directory_iterator(path))
     {   
-        // std::string path_string{path.u8string()}
+        std::string file_name = entry.path().string();
 
         // cout << typeid(entry.path().string()).name() << endl;
         const char * video_path = entry.path().c_str();
-        std::string check_filename = std::string(save_path)+std::string(&video_path[24]);
+        std::string check_filename = std::string(save_path)+file_name.substr(24);
+        // std::string check_filename = "./results";
+        // cout << check_filename << endl;
         struct stat buffer;
-        // if (std::string(&video_path).c_string()[24] == ".")
-        //     continue;
-        // if (stat(check_filename.c_str(), &buffer) == -1) {
-        //     cout << check_filename.c_str() << " already present" << endl;
-        //     f_count++;
-        //     cout << f_count;
-        //     continue;
-        //     // exit(EXIT_SUCCESS);
-        // }
-        if (f_count < 352) {
-            // cout << check_filename.c_str() << " already present" << endl;
+        char* check = &check_filename[1];
+        if (stat(check, &buffer) == 0 || check_filename.find("source4") != std::string::npos) {
+        // if (check_filename.find("source4") != std::string::npos) {
+            cout << check_filename.substr(19) << " already present" << endl;
             f_count++;
-            // cout << f_count;
             continue;
         }
         else {
             get_sp_labels(K, compa, video_path, save_path);
             f_count++;
-            cout << "files completed: " << f_count << endl;
-            if (f_count == 500){
-                break;
+            cout << "file processed: " << file_name.substr(24) << endl;
+            cout << f_count << "files done" << endl;
+            // if (f_count == 500){
+            //     break;
             }
-        }
     }
-        // std::cout << entry.path() << std::endl;
-
+    cout << f_count << endl;
     return 0;
 }
