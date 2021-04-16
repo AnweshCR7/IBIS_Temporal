@@ -10,6 +10,7 @@
 #include <iostream>
 #include "ibis.h"
 #include <opencv2/opencv.hpp>
+// #include "opencv-3.4.1/include/opencv2/opencv.hpp"
 #include <unistd.h>
 #include <cmath>
 #include <fstream>
@@ -358,7 +359,7 @@ int filter( const struct dirent *name ) {
 }
 
 // int get_sp_labels( int argc, char* argv[] )
-int get_sp_labels( int K, int compa, const char* video_path, const char* save_path)
+int get_sp_labels( int K, int compa, const char* video_path, const char* save_path, std::string save_name)
 {
     printf(" - Temporal IBIS - \n\n");
 
@@ -420,11 +421,12 @@ int get_sp_labels( int K, int compa, const char* video_path, const char* save_pa
             exit(EXIT_SUCCESS);
 
         }
-        cout << "reqches";
 
         cv::Mat img;
         int ii=0;
-        std::string output_basename = std::string(save_path)+std::string(&video_path[24]);
+        std::string output_basename = std::string(save_path)+save_name;
+        cout << output_basename << endl;
+        // return 0;
 
         // std::string output_basename = std::string(save_path) + std::string(video_path.substr(24, video_path.find("."));
         // printf(video_path.substr(24, video_path.find("."));
@@ -462,39 +464,30 @@ int main(int argc, char* argv[])
 {   
     int K = 150;
     int compa = 20;
-    std::string path = "/Volumes/T7/vipl_videos";
+    std::string path = "/Volumes/T7/";
     const char * save_path = "../results/ecg/";
     int f_count = 0;
-    for (const auto & entry : fs::directory_iterator(path))
+    // for (const auto & entry : std::__fs::filesystem::recursive_directory_iterator(path))
+    for (const auto & entry : std::__fs::filesystem::directory_iterator(path))
     {   
         // std::string path_string{path.u8string()}
-
-        // cout << typeid(entry.path().string()).name() << endl;
-        const char * video_path = entry.path().c_str();
-        std::string check_filename = std::string(save_path)+std::string(&video_path[24]);
-        struct stat buffer;
-        // if (std::string(&video_path).c_string()[24] == ".")
-        //     continue;
-        // if (stat(check_filename.c_str(), &buffer) == -1) {
-        //     cout << check_filename.c_str() << " already present" << endl;
-        //     f_count++;
-        //     cout << f_count;
-        //     continue;
-        //     // exit(EXIT_SUCCESS);
-        // }
-        if (f_count < 352) {
-            // cout << check_filename.c_str() << " already present" << endl;
-            f_count++;
-            // cout << f_count;
-            continue;
-        }
-        else {
-            get_sp_labels(K, compa, video_path, save_path);
+        std::string file_name = entry.path().string();
+        if ( file_name.find(".m4v") != std::string::npos )
+        {
+            if ( file_name.find("._") != std::string::npos )
+            {
+                continue;
+            }
+            // cout << file_name << endl;
+            std::string save_name = file_name.substr(12, 2) + "_" + file_name.substr(15, 2) + "_" + file_name.substr(18, 6);
+            // cout << file_name << endl;
+            const char * video_path = entry.path().c_str();
+            get_sp_labels(K, compa, video_path, save_path, save_name);
+            
+            cout << "Processed: " << file_name << endl;
             f_count++;
             cout << "files completed: " << f_count << endl;
-            if (f_count == 500){
-                break;
-            }
+            break;
         }
     }
         // std::cout << entry.path() << std::endl;
