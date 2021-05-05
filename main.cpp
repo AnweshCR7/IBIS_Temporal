@@ -462,10 +462,12 @@ int dirExists(const char* const path)
 
 int main(int argc, char* argv[])
 {   
-    int K = 150;
+    int K = 300;
     int compa = 20;
-    std::string path = "/Volumes/T7/";
-    const char * save_path = "../results/ecg/";
+    // Path to input directory for videos
+    std::string path = "/Volumes/T7/ecg_m4v_cam/";
+    // Path to IBIS output files
+    const char * save_path = "../results/ecg_delete_later/";
     int f_count = 0;
     // for (const auto & entry : std::__fs::filesystem::recursive_directory_iterator(path))
     for (const auto & entry : std::__fs::filesystem::directory_iterator(path))
@@ -479,15 +481,15 @@ int main(int argc, char* argv[])
                 continue;
             }
             // cout << file_name << endl;
-            std::string save_name = file_name.substr(12, 2) + "_" + file_name.substr(15, 2) + "_" + file_name.substr(18, 6);
-            // cout << file_name << endl;
+            std::string save_name = file_name.substr(25, 12);
+            // cout << save_name << endl;
             const char * video_path = entry.path().c_str();
             get_sp_labels(K, compa, video_path, save_path, save_name);
             
             cout << "Processed: " << file_name << endl;
             f_count++;
             cout << "files completed: " << f_count << endl;
-            break;
+            // break;
         }
     }
         // std::cout << entry.path() << std::endl;
