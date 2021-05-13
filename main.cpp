@@ -165,7 +165,8 @@ void write_labels(cv::Mat lblImg, const std::string& output_labels, bool finaliz
         lblImg.release();
     }else{
         if(!lblsVidWriter.isOpened()){
-            // cout << "OPening the video stream!!!!!!!!" << endl;
+            cout << "OPening the video stream!!!!!!!!" << endl;
+            cout << output_labels;
             lblsVidWriter.open(output_labels,fourcc,fps, cv::Size(lblImg.cols,lblImg.rows),0);
             // cout << "DONE the video stream!!!!!!!!" << endl;
         }
@@ -270,8 +271,8 @@ void execute_IBIS( int K, int compa, IBIS* Super_Pixel, Signal_processing* Signa
         //Update label image
         lblImg->ptr<uchar>()[i/3] = (uchar)(labels[ii]);
     }
-    cout << "ii = "<< labels[0] << endl;
-    cout << "ii = "<< labels[500] << endl;
+    // cout << "ii = "<< labels[0] << endl;
+    // cout << "ii = "<< labels[500] << endl;
 
     float* R = new float[Super_Pixel->getMaxSPNumber()];
     float* G = new float[Super_Pixel->getMaxSPNumber()];
@@ -437,7 +438,10 @@ void execute_IBIS( int K, int compa, IBIS* Super_Pixel, Signal_processing* Signa
     sprintf(output_labels, "results/%s/contours.seg", output_basename.c_str());
     write_contours_composite(ubuff,pImg->cols*pImg->rows,output_labels);
     sprintf(output_labels, "results/%s/0_labels.avi", output_basename.c_str());
-    write_labels(*lblImg,output_labels);
+    // cv::imshow("labels", *lblImg);
+
+    // cv::waitKey( 1 );
+    write_labels(*lblImg, output_labels);
 #endif
     delete lblImg;
     delete pImg;
