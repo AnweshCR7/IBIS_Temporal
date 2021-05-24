@@ -25,7 +25,7 @@
 namespace fs = std::__fs::filesystem;
 
 #define SAVE_output         1
-#define visu                1
+#define visu                0
 #define visu_SNR	    	0
 #define signal_size         300
 #define signal_processing   0
@@ -409,37 +409,71 @@ int get_sp_labels( int K, int compa, const char* video_path, const char* save_pa
 
     if( type == -1 )
         exit(EXIT_SUCCESS);
-    else if( type >= 1 ) {
-        // IBIS
+    else if(type == 0){
+
         IBIS Super_Pixel( K, compa );
         Signal_processing Signal( K, signal_size );
-
-        // get picture
-        cv::VideoCapture video( video_path );
-        if(!video.isOpened()) { // check if we succeeded
-            printf("Can't open this device or video file.\n");
-            exit(EXIT_SUCCESS);
-
-        }
-
+        
         cv::Mat img;
         int ii=0;
         std::string output_basename = std::string(save_path)+save_name;
-        cout << output_basename << endl;
-        // return 0;
-
-        // std::string output_basename = std::string(save_path) + std::string(video_path.substr(24, video_path.find("."));
-        // printf(video_path.substr(24, video_path.find("."));
+        // cout << output_basename << endl;
 
         char command[255] = {0};
         sprintf( command, "mkdir -p results/%s\n", output_basename.c_str() );
         system( command );
+        
+        // cout << video_path;
+        for (const auto & entry : std::__fs::filesystem::directory_iterator(video_path)) {
+            std::string img_path = entry.path().string();
+            if ( img_path.find(".png") != std::string::npos ){
+                img = cv::imread(img_path);
+                if (img.empty())
+                {
+                    std::cout << "!!! Failed imread(): image not found" << std::endl;
+                    // don't let the execution continue, else imshow() will crash.
+                }
+                else{
+                    execute_IBIS( K, compa, &Super_Pixel, &Signal, &img, output_basename, ii );
+                    ii++;
+                }
+            }
+        }   
+    }
+    else if( type >= 1 ) {
 
-        while( video.read( img ) ) {
-            execute_IBIS( K, compa, &Super_Pixel, &Signal, &img, output_basename, ii );
-            ii++;
 
-        }
+       
+        // // IBIS
+        // IBIS Super_Pixel( K, compa );
+        // Signal_processing Signal( K, signal_size );
+
+        // // get picture
+        // cv::VideoCapture video( video_path );
+        // if(!video.isOpened()) { // check if we succeeded
+        //     printf("Can't open this device or video file.\n");
+        //     exit(EXIT_SUCCESS);
+
+        // }
+
+        // cv::Mat img;
+        // int ii=0;
+        // std::string output_basename = std::string(save_path)+save_name;
+        // cout << output_basename << endl;
+        // // return 0;
+
+        // // std::string output_basename = std::string(save_path) + std::string(video_path.substr(24, video_path.find("."));
+        // // printf(video_path.substr(24, video_path.find("."));
+
+        // char command[255] = {0};
+        // sprintf( command, "mkdir -p results/%s\n", output_basename.c_str() );
+        // system( command );
+
+        // while( video.read( img ) ) {
+        //     execute_IBIS( K, compa, &Super_Pixel, &Signal, &img, output_basename, ii );
+        //     ii++;
+
+        // }
 
     }
     // exit(EXIT_SUCCESS);
@@ -462,37 +496,59 @@ int dirExists(const char* const path)
 
 int main(int argc, char* argv[])
 {   
-    int K = 300;
+    int K = 2000;
     int compa = 20;
     // Path to input directory for videos
-    std::string path = "/Volumes/T7/ecg_m4v_cam/";
+    std::string path = "/Volumes/T7/PURE_unzipped/";
     // Path to IBIS output files
-    const char * save_path = "../results/ecg_delete_later/";
+    const char * save_path = "../results/pure_2000/";
     int f_count = 0;
     // for (const auto & entry : std::__fs::filesystem::recursive_directory_iterator(path))
     for (const auto & entry : std::__fs::filesystem::directory_iterator(path))
     {   
         // std::string path_string{path.u8string()}
         std::string file_name = entry.path().string();
-        if ( file_name.find(".m4v") != std::string::npos )
-        {
-            if ( file_name.find("._") != std::string::npos )
-            {
-                continue;
-            }
-            // cout << file_name << endl;
-            std::string save_name = file_name.substr(25, 12);
-            // cout << save_name << endl;
-            const char * video_path = entry.path().c_str();
+        // cout << file_name << endl;
+
+        std::string save_name = file_name.substr(26, 5);
+
+        const char * video_path = entry.path().c_str();
+        std::string check_filename = std::string(save_path) + save_name;
+
+        struct stat buffer;
+        char* check = &check_filename[1];
+        if (stat(check, &buffer) == 0) {
+            cout << check_filename.substr(19) << " already present" << endl;
+            f_count++;
+            continue;
+        }
+        else {
             get_sp_labels(K, compa, video_path, save_path, save_name);
-            
-            cout << "Processed: " << file_name << endl;
             f_count++;
             cout << "files completed: " << f_count << endl;
-            // break;
         }
+
+        // if ( file_name.find(".m4v") != std::string::npos )
+        // {
+        //     if ( file_name.find("._") != std::string::npos )
+        //     {
+        //         continue;
+        //     }
+        //     // cout << file_name << endl;
+        //     std::string save_name = file_name.substr(32, 12);
+        //     cout << save_name << endl;
+        //     const char * video_path = entry.path().c_str();
+        //     // get_sp_labels(K, compa, video_path, save_path, save_name);
+            
+        //     cout << "Processed: " << file_name << endl;
+        //     // f_count++;
+        //     cout << "files completed: " << f_count << endl;
+        //     break;
+        // }
+
+        // f_count++;
     }
-        // std::cout << entry.path() << std::endl;
+    cout << f_count << std::endl;
 
     return 0;
 }
