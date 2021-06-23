@@ -25,7 +25,7 @@
 namespace fs = std::__fs::filesystem;
 
 #define SAVE_output         1
-#define visu                1
+#define visu                0
 #define visu_SNR	    	0
 #define signal_size         300
 #define signal_processing   0
@@ -318,10 +318,10 @@ void execute_IBIS( int K, int compa, IBIS* Super_Pixel, Signal_processing* Signa
 
 #if SAVE_output
     char output_labels[255] = {0};
-    sprintf(output_labels, "results/%s/traces_%04i.csv", output_basename.c_str(), frame_index);
+    sprintf(output_labels, "%s/traces_%04i.csv", output_basename.c_str(), frame_index);
     write_traces( R, G, B, output_labels, Super_Pixel );
 
-    sprintf(output_labels, "results/%s/parent_%04i.seg", output_basename.c_str(), frame_index);
+    sprintf(output_labels, "%s/parent_%04i.seg", output_basename.c_str(), frame_index);
 
     std::ofstream file;
     file.open(output_labels);
@@ -432,7 +432,7 @@ int get_sp_labels( int K, int compa, const char* video_path, const char* save_pa
         // printf(video_path.substr(24, video_path.find("."));
 
         char command[255] = {0};
-        sprintf( command, "mkdir -p results/%s\n", output_basename.c_str() );
+        sprintf( command, "mkdir -p %s\n", output_basename.c_str() );
         system( command );
 
         while( video.read( img ) ) {
@@ -465,33 +465,64 @@ int main(int argc, char* argv[])
     int K = 300;
     int compa = 20;
     // Path to input directory for videos
-    std::string path = "/Volumes/T7/ecg_m4v_cam/";
+    std::string path = "/Volumes/T7/phys_clips/";
     // Path to IBIS output files
-    const char * save_path = "../results/ecg_delete_later/";
+    const char * save_path = "/Volumes/T7/st_maps/Phys/phys_300/";
     int f_count = 0;
     // for (const auto & entry : std::__fs::filesystem::recursive_directory_iterator(path))
     for (const auto & entry : std::__fs::filesystem::directory_iterator(path))
     {   
         // std::string path_string{path.u8string()}
         std::string file_name = entry.path().string();
-        if ( file_name.find(".m4v") != std::string::npos )
+        if ( file_name.find(".mp4") != std::string::npos )
         {
             if ( file_name.find("._") != std::string::npos )
             {
                 continue;
             }
+
             // cout << file_name << endl;
-            std::string save_name = file_name.substr(25, 12);
+            std::string save_name = file_name.substr(23, 5);
             // cout << save_name << endl;
             const char * video_path = entry.path().c_str();
-            get_sp_labels(K, compa, video_path, save_path, save_name);
-            
-            cout << "Processed: " << file_name << endl;
-            f_count++;
-            cout << "files completed: " << f_count << endl;
+            std::string check_filename = std::string(save_path) + save_name;
+            // cout << check_filename << endl;
+            struct stat buffer;
+            char* check = &check_filename[1];
+            if (stat(check, &buffer) == 0) {
+                cout << check_filename.substr(19) << " already present" << endl;
+                f_count++;
+                continue;
+            }
+            else {
+                if (f_count >= 726){
+                    get_sp_labels(K, compa, video_path, save_path, save_name);
+                    cout << "Processed: " << file_name << endl;
+                }
+                
+                f_count++;
+                cout << "files completed: " << f_count << endl;
+            }
             // break;
+            // if (f_count == 726){
+            //     break;
+            // }
         }
     }
+
+
+        // std::string save_name = file_name.substr(23, 4);
+        // // cout << save_name << endl;
+        // const char * video_path = entry.path().c_str();
+        // // if (f_count){
+        // get_sp_labels(K, compa, video_path, save_path, save_name);
+        // // }
+        
+        // cout << "Processed: " << file_name << endl;
+        // f_count++;
+        // cout << "files completed: " << f_count << endl;
+        // break;
+        // }
         // std::cout << entry.path() << std::endl;
 
     return 0;
