@@ -7,6 +7,8 @@
  * You can either provide a file, or a directory, path to segment images
  */
 
+#include <chrono>
+using namespace std::chrono;
 #include <iostream>
 #include "ibis.h"
 #include <opencv2/opencv.hpp>
@@ -25,7 +27,7 @@
 namespace fs = std::__fs::filesystem;
 
 #define SAVE_output         1
-#define visu                0
+#define visu                1
 #define visu_SNR	    	0
 #define signal_size         300
 #define signal_processing   0
@@ -435,6 +437,7 @@ int get_sp_labels( int K, int compa, const char* video_path, const char* save_pa
                 }
                 else{
                     execute_IBIS( K, compa, &Super_Pixel, &Signal, &img, output_basename, ii );
+                    // __asm__("int $3");
                     ii++;
                 }
             }
@@ -495,13 +498,14 @@ int dirExists(const char* const path)
 }
 
 int main(int argc, char* argv[])
-{   
-    int K = 2000;
+{   auto start = high_resolution_clock::now();
+
+    int K = 1000;
     int compa = 20;
     // Path to input directory for videos
     std::string path = "/Volumes/T7/PURE_unzipped/";
     // Path to IBIS output files
-    const char * save_path = "../results/pure_2000/";
+    const char * save_path = "../results/delete_1000/";
     int f_count = 0;
     // for (const auto & entry : std::__fs::filesystem::recursive_directory_iterator(path))
     for (const auto & entry : std::__fs::filesystem::directory_iterator(path))
@@ -547,8 +551,15 @@ int main(int argc, char* argv[])
         // }
 
         // f_count++;
+        break;
     }
     cout << f_count << std::endl;
-
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    
+    // To get the value of duration use the count()
+    // member function on the duration object
+    cout << "Time taken by function: "
+         << duration.count() << " microseconds" << endl;
     return 0;
 }
